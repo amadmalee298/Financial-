@@ -1,0 +1,17 @@
+@import "tailwindcss";
+
+/* Design tokens (Tailwind v4 is configured in CSS, not tailwind.config.ts). */
+@theme {
+  --color-primary: #0f172a;
+  --color-secondary: #1e293b;
+  --color-positive: #16a34a;
+  --color-negative: #dc2626;
+  --color-background: #f8fafc;
+
+  --font-sans: var(--font-sans-thai), ui-sans-serif, system-ui, sans-serif;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-primary);
+}
