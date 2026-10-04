@@ -169,6 +169,13 @@ after another.
   opening the dashboard went from 780 ms to a first paint at 56 ms and full
   content at 448 ms (was 894 ms). These are simulated numbers, not your
   deployment.
+- **Speed check** (*Settings → ตรวจความเร็ว*): shows where the time goes, from
+  the phone itself. It times a plain static file (phone → Vercel), a function
+  with no database (cold start), trivial Supabase queries from the server
+  (distance to the database, with the region the function runs in), and a real
+  dashboard load, then says in plain language what to fix. Target: the
+  dashboard in under 3 seconds. Backed by `GET /api/speed` (signed-in users
+  only; nothing is stored).
 - Free Supabase projects pause after a week of inactivity and the first request
   after that is slow; free serverless functions also have a cold start of about
   a second after sitting idle.
