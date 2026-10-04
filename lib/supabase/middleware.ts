@@ -2,7 +2,14 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
 // /api/cron has no user session; the route checks CRON_SECRET itself.
-const PUBLIC_PATHS = ["/login", "/auth", "/api/cron"];
+// /offline is the service worker's fallback page and must load signed out.
+const PUBLIC_PATHS = ["/login", "/auth", "/api/cron", "/offline"];
+
+/**
+ * Tells the service worker whose data a page holds, so offline copies of one
+ * user's pages are never shown to another user on the same device.
+ */
+export const USER_HEADER = "x-app-user";
 
 function isPublicPath(pathname: string) {
   return PUBLIC_PATHS.some(
@@ -61,6 +68,7 @@ export async function updateSession(request: NextRequest) {
     return redirectWithCookies(url, response);
   }
 
+  if (user) response.headers.set(USER_HEADER, user.id);
   return response;
 }
 

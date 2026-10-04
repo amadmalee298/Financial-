@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Card } from "@/components/ui/Card";
+import { InstallCard } from "@/components/pwa/InstallCard";
 import { createClient } from "@/lib/supabase/server";
 import { formatThaiDate } from "@/lib/utils/date";
 
@@ -25,6 +26,7 @@ export default async function SettingsPage() {
           <dd>THB</dd>
         </dl>
       </Card>
+      <InstallCard />
     </div>
   );
 }

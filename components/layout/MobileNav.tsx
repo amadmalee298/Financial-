@@ -16,7 +16,7 @@ export function MobileNav() {
           key={item.href}
           href={item.href}
           aria-current={isActive(pathname, item.href) ? "page" : undefined}
-          className="py-3 text-center text-xs text-slate-400 aria-[current=page]:text-white"
+          className="flex min-h-14 items-center justify-center text-center text-xs text-slate-400 aria-[current=page]:text-white"
         >
           {item.label}
         </Link>

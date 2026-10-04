@@ -1,10 +1,12 @@
 import Image from "next/image";
 import Link from "next/link";
+import { ReloadButton } from "@/components/pwa/ReloadButton";
+import { SignOutButton } from "@/components/pwa/SignOutButton";
 import { navItems } from "./navItems";
 
 export function Header({ email }: { email: string }) {
   return (
-    <header className="sticky top-0 z-10 flex h-14 items-center justify-between gap-4 border-b border-slate-800 bg-primary px-4 text-white lg:border-slate-200 lg:bg-white lg:px-8 lg:text-primary">
+    <header className="sticky top-0 z-10 flex h-[calc(3.5rem+env(safe-area-inset-top))] items-center pt-[env(safe-area-inset-top)] justify-between gap-4 border-b border-slate-800 bg-primary px-[max(1rem,env(safe-area-inset-left))] text-white lg:border-slate-200 lg:bg-white lg:px-8 lg:text-primary">
       <Link href="/dashboard" className="flex items-center gap-2 lg:hidden">
         <Image src="/logo.svg" alt="" width={28} height={28} />
         <span className="font-semibold">My Investment</span>
@@ -25,11 +27,8 @@ export function Header({ email }: { email: string }) {
             ))}
             <hr className="my-1 border-slate-200" />
           </div>
-          <form action="/auth/signout" method="post">
-            <button type="submit" className="w-full rounded-lg px-3 py-2 text-left text-sm text-negative hover:bg-slate-100">
-              ออกจากระบบ
-            </button>
-          </form>
+          <ReloadButton />
+          <SignOutButton />
         </div>
       </details>
     </header>

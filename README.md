@@ -139,6 +139,37 @@ Tailwind classes such as `bg-primary`, `text-positive`.
 - Chart colors: value `#2a78d6`, cost `#eb6834` (a validated
   colorblind-safe pair).
 
+## PWA and offline use (Phase 7)
+
+The app installs to the home screen and opens full screen on iPhone, iPad
+and Android; `Settings` shows the steps for the device in use.
+
+- **Install**: iPhone/iPad — Safari → Share → *Add to Home Screen*. Android and
+  desktop Chrome/Edge — the *Install app* button in Settings or the browser
+  menu. Files: `app/manifest.ts`, icons in `public/icons` and
+  `app/apple-icon.png` (regenerate from `scripts/icons/*.svg` with
+  `scripts/generate-icons.mjs`; needs Playwright with Chromium).
+- **Offline is read-only.** `public/sw.js` keeps the static files and a copy of
+  each signed-in page you open. With no connection (or a server that cannot be
+  reached, or a very slow network) it shows the last copy with a banner giving
+  the time it was saved. Pages never opened show an offline page. Saving,
+  deleting and updating prices are disabled offline; queued offline edits are
+  not supported. The service worker is registered in production builds only.
+- **Privacy on shared devices**: saved pages hold financial data, so they are
+  stored only for the signed-in user (the proxy tags pages with `x-app-user`),
+  **deleted when you sign out**, and purged when a different user signs in.
+  Closing the browser without signing out leaves your saved pages on that
+  device until the next sign-out.
+- **iOS details**: full-screen mode with a translucent status bar and safe-area
+  padding for the notch and home indicator, form fields at 16px so Safari does
+  not zoom on focus, 56px tap targets in the bottom bar. There is no browser
+  reload in the installed app, so the menu has *Reload page*.
+- **Limits**: no push notifications or background sync; iOS may evict saved
+  data after a few weeks without use; email confirmation links open in the
+  browser, not the installed app; no custom iOS splash screens.
+- **Testing offline**: Playwright's `setOffline` does not affect requests made
+  by a service worker, so stop the server instead of (or as well as) using it.
+
 ## Market prices (Phase 6)
 
 Daily closing prices for the stocks you hold or watch are stored in
@@ -205,7 +236,7 @@ app/
   login/            login + sign-up page and server actions
   auth/             email confirm, sign-out, error routes
 components/
-  layout/  ui/  auth/  stocks/  transactions/  portfolio/  dashboard/
+  layout/  ui/  auth/  pwa/  stocks/  transactions/  portfolio/  dashboard/
   dividends/  watchlist/  analysis/
 app/api/stocks      GET ?q= stock search
 lib/
@@ -216,6 +247,7 @@ lib/
   utils/            currency.ts, date.ts, decimal.ts, form.ts, format.ts, redirect.ts
 types/              database.ts (schema types), transaction.ts, portfolio.ts
 proxy.ts            Next.js 16 proxy (formerly middleware.ts): auth guard
+public/sw.js        service worker (offline, see PWA section)
 supabase/
   migrations/001_initial_schema.sql   tables, RLS, triggers
   migrations/002_manual_prices.sql    per-user manual prices
@@ -237,4 +269,4 @@ Notes:
 - [x] **Phase 4** — Dashboard + Charts + Allocation + Performance
 - [x] **Phase 5** — Dividend + Watchlist + Investment Journal
 - [x] **Phase 6** — Stock Price API + Automatic price update + SET data
-- [ ] **Phase 7** — PWA + iPhone / iPad + Offline support
+- [x] **Phase 7** — PWA + iPhone / iPad + Offline support

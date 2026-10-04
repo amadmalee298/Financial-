@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { refreshMyPrices, type RefreshState } from "@/app/(app)/portfolio/actions";
+import { useOnline } from "@/components/pwa/useOnline";
 
 function summary({ result, error }: RefreshState) {
   if (error) return { text: error, tone: "error" as const };
@@ -18,6 +19,7 @@ function summary({ result, error }: RefreshState) {
 
 /** Fetches market prices for holdings and watchlist, then shows what happened. */
 export function RefreshPricesButton() {
+  const online = useOnline();
   const [pending, startTransition] = useTransition();
   const [state, setState] = useState<RefreshState | null>(null);
   const message = state && summary(state);
@@ -26,7 +28,8 @@ export function RefreshPricesButton() {
     <div className="flex flex-col items-end gap-1">
       <button
         type="button"
-        disabled={pending}
+        disabled={pending || !online}
+        title={online ? undefined : "ออฟไลน์ — อัปเดตราคาไม่ได้"}
         onClick={() => startTransition(async () => setState(await refreshMyPrices()))}
         className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium hover:bg-slate-50 disabled:opacity-60"
       >

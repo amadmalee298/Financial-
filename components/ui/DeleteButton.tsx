@@ -1,6 +1,7 @@
 "use client";
 
 import { useTransition } from "react";
+import { useOnline } from "@/components/pwa/useOnline";
 
 /**
  * Confirm, then run a Server Action (usually bound to a row id, e.g.
@@ -13,12 +14,14 @@ export function DeleteButton({
   action: () => Promise<{ error?: string } | void>;
   confirmText: string;
 }) {
+  const online = useOnline();
   const [pending, startTransition] = useTransition();
 
   return (
     <button
       type="button"
-      disabled={pending}
+      disabled={pending || !online}
+      title={online ? undefined : "ออฟไลน์ — ลบไม่ได้"}
       onClick={() => {
         if (!confirm(confirmText)) return;
         startTransition(async () => {
