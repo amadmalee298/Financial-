@@ -1,8 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ReloadButton } from "@/components/pwa/ReloadButton";
-import { SignOutButton } from "@/components/pwa/SignOutButton";
-import { navItems } from "./navItems";
+import { HeaderMenu } from "./HeaderMenu";
 
 export function Header({ email }: { email: string }) {
   return (
@@ -13,24 +11,7 @@ export function Header({ email }: { email: string }) {
       </Link>
       <span className="hidden truncate text-sm text-slate-500 lg:block">{email}</span>
 
-      <details className="relative">
-        <summary className="cursor-pointer list-none rounded-lg px-3 py-1.5 text-sm hover:bg-secondary lg:hover:bg-slate-100">
-          เมนู
-        </summary>
-        <div className="absolute right-0 mt-2 w-56 rounded-xl border border-slate-200 bg-white p-2 text-primary shadow-lg">
-          <p className="truncate px-3 py-2 text-xs text-slate-500 lg:hidden">{email}</p>
-          <div className="flex flex-col lg:hidden">
-            {navItems.map((item) => (
-              <Link key={item.href} href={item.href} className="rounded-lg px-3 py-2 text-sm hover:bg-slate-100">
-                {item.label}
-              </Link>
-            ))}
-            <hr className="my-1 border-slate-200" />
-          </div>
-          <ReloadButton />
-          <SignOutButton />
-        </div>
-      </details>
+      <HeaderMenu email={email} />
     </header>
   );
 }
