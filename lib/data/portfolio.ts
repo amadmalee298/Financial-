@@ -1,4 +1,5 @@
 import "server-only";
+import { loadError } from "@/lib/utils/errors";
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { buildHoldings, summarize, type PortfolioTransaction } from "@/lib/calculations/portfolio";
@@ -41,7 +42,7 @@ const getUserRows = cache(async () => {
   ]);
 
   if (transactions.error || prices.error || dividends.error || watchlist.error) {
-    throw new Error("โหลดข้อมูลพอร์ตไม่สำเร็จ");
+    throw loadError("โหลดข้อมูลพอร์ตไม่สำเร็จ", transactions.error, prices.error, dividends.error, watchlist.error);
   }
 
   // Market prices are shared by everyone, so later queries ask only for the
@@ -61,7 +62,7 @@ const getRecentMarket = cache(async () => {
     .select("stock_id, price_date, close")
     .in("stock_id", stockIds)
     .gte("price_date", daysAgo(RECENT_PRICE_DAYS));
-  if (recent.error) throw new Error("โหลดข้อมูลราคาไม่สำเร็จ");
+  if (recent.error) throw loadError("โหลดข้อมูลราคาไม่สำเร็จ", recent.error);
 
   return [...latestClose(recent.data)].map(([stock_id, p]) => ({ stock_id, close: p.price, price_date: p.date }));
 });
