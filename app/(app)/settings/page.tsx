@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Card } from "@/components/ui/Card";
-import { SpeedCheck } from "@/components/diagnostics/SpeedCheck";
 import { InstallCard } from "@/components/pwa/InstallCard";
 import { createClient } from "@/lib/supabase/server";
 import { formatThaiDate } from "@/lib/utils/date";
@@ -27,7 +26,6 @@ export default async function SettingsPage() {
           <dd>THB</dd>
         </dl>
       </Card>
-      <SpeedCheck />
       <InstallCard />
     </div>
   );
