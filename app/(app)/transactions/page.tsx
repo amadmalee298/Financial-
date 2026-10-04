@@ -30,7 +30,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
     query.returns<TransactionWithStock[]>(),
     supabase.from("stocks").select("id, symbol, name, market, sector").order("symbol"),
   ]);
-  if (error) throw loadError("โหลดรายการซื้อขายไม่สำเร็จ", error);
+  if (error) throw loadError("transactions", "โหลดรายการซื้อขายไม่สำเร็จ", error);
 
   let formValues: TransactionFormValues | null = null;
   if (params.edit) {

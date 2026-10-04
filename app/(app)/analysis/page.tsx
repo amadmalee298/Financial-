@@ -24,7 +24,7 @@ export default async function AnalysisListPage({ searchParams }: { searchParams:
       .order("updated_at", { ascending: false }),
     getCurrentPrices(),
   ]);
-  if (error) throw loadError("โหลดบทวิเคราะห์ไม่สำเร็จ", error);
+  if (error) throw loadError("analysis", "โหลดบทวิเคราะห์ไม่สำเร็จ", error);
 
   return (
     <div className="flex flex-col gap-4">

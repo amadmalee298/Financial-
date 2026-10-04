@@ -25,7 +25,7 @@ export const getSessionUser = cache(async () => {
     // be fetched for a moment) says nothing about the user, so try again, and if it
     // still fails show the error page rather than silently signing them out.
     if (!isAuthRetryableFetchError(error)) return null;
-    if (attempt >= 2) throw loadError("ตรวจสอบการเข้าสู่ระบบไม่สำเร็จ", error);
+    if (attempt >= 2) throw loadError("auth", "ตรวจสอบการเข้าสู่ระบบไม่สำเร็จ", error);
     await new Promise((resolve) => setTimeout(resolve, 250));
   }
 });

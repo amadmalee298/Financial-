@@ -33,7 +33,7 @@ export default async function DividendsPage({ searchParams }: { searchParams: Se
     supabase.from("stocks").select("id, symbol, name, market, sector").order("symbol"),
     getShareHistory(),
   ]);
-  if (error) throw loadError("โหลดเงินปันผลไม่สำเร็จ", error);
+  if (error) throw loadError("dividends", "โหลดเงินปันผลไม่สำเร็จ", error);
 
   const yearOf = (d: DividendWithStock) => (d.payment_date ?? d.xd_date ?? "").slice(0, 4);
   const years = [...new Set(dividends.map(yearOf).filter(Boolean))].sort().reverse();

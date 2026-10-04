@@ -1,3 +1,5 @@
+import { buildDigest } from "./error-digest";
+
 type SupabaseLikeError = { code?: string; message?: string; details?: string; hint?: string };
 
 export function describeError(error: unknown, depth = 0): string {
@@ -18,13 +20,16 @@ export function describeError(error: unknown, depth = 0): string {
 
 /**
  * Error for a failed data load. In production Next.js hides the message of an
- * error thrown while rendering and shows only a numeric digest, so the real
- * cause is written to the server log first (Vercel → Logs) and then a generic
- * error is thrown. Only the code, message, details and hint are logged: no
- * keys, tokens or row data.
+ * error thrown while rendering and shows only a digest, so:
+ *  - the real cause is written to the server log first (Vercel → Logs); only the
+ *    code, message, details and hint are logged: no keys, tokens or row data;
+ *  - the error's digest is set to a short readable code (see buildDigest) such as
+ *    "E-portfolio-PGRST205", which Next passes on to the error page, so the cause
+ *    can be read straight off the screen.
+ * `key` names the place that failed ("portfolio", "auth", ...).
  */
-export function loadError(what: string, ...causes: unknown[]) {
-  const reasons = causes.filter(Boolean).map(describeError);
-  console.error(`[load-error] ${what}: ${reasons.join(" ; ") || "no detail"}`);
-  return new Error(what);
+export function loadError(key: string, what: string, ...causes: unknown[]) {
+  const reasons = causes.filter(Boolean).map((cause) => describeError(cause));
+  console.error(`[load-error] ${key}: ${what}: ${reasons.join(" ; ") || "no detail"}`);
+  return Object.assign(new Error(what), { digest: buildDigest(key, causes) });
 }
