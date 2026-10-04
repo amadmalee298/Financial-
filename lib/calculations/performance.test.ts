@@ -95,3 +95,40 @@ describe("totalsByPeriod", () => {
     ]);
   });
 });
+
+describe("buildPerformance with market closes", () => {
+  const txs = [tx("BUY", "2026-01-05", "100", "10"), tx("SELL", "2026-03-01", "100", "14")];
+  const closes = [
+    { stock_id: "PTT", price_date: "2026-01-05", close: "10" },
+    { stock_id: "PTT", price_date: "2026-01-06", close: "11" },
+    { stock_id: "PTT", price_date: "2026-01-07", close: "12" },
+    { stock_id: "PTT", price_date: "2026-02-27", close: "13" },
+  ];
+
+  it("values past dates at the market close and marks them as real", () => {
+    const points = buildPerformance(txs, [], [], "2026-04-01", closes);
+    const first = points.find((p) => p.date === "2026-01-05")!;
+    expect(first.marketValue.toString()).toBe("1000");
+    expect(first.estimated).toBe(false);
+  });
+
+  it("includes days with a close even when nothing was traded", () => {
+    const points = buildPerformance(txs, [], [], "2026-04-01", closes);
+    expect(points.map((p) => p.date)).toContain("2026-01-06");
+    expect(points.find((p) => p.date === "2026-01-06")!.marketValue.toString()).toBe("1100");
+  });
+
+  it("falls back to an estimate when the newest close is too old", () => {
+    const sparse = [{ stock_id: "PTT", price_date: "2026-01-05", close: "10" }];
+    const points = buildPerformance([tx("BUY", "2026-01-05", "100", "10"), tx("BUY", "2026-02-20", "10", "12", "AOT")], [], [], "2026-04-01", sparse);
+    const feb = points.find((p) => p.date === "2026-02-20")!;
+    expect(feb.estimated).toBe(true);
+  });
+
+  it("is exact once everything is sold", () => {
+    const points = buildPerformance(txs, [], [], "2026-04-01", closes);
+    const after = points.find((p) => p.date === "2026-03-01")!;
+    expect(after.marketValue.toString()).toBe("0");
+    expect(after.estimated).toBe(false);
+  });
+});

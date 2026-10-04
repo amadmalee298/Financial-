@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/Card";
 import { HoldingsTable } from "@/components/portfolio/HoldingsTable";
 import { PortfolioStats } from "@/components/portfolio/PortfolioStats";
 import { PriceModal } from "@/components/portfolio/PriceModal";
+import { RefreshPricesButton } from "@/components/portfolio/RefreshPricesButton";
 
 export const metadata: Metadata = { title: "พอร์ตการลงทุน" };
 
@@ -24,14 +25,17 @@ export default async function PortfolioPage({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <h1 className="text-2xl font-semibold">พอร์ตการลงทุน</h1>
-        <Link
-          href="/transactions?new=1"
-          className="rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-white hover:bg-secondary"
-        >
-          + บันทึกซื้อขาย
-        </Link>
+        <div className="flex flex-wrap items-start justify-end gap-2">
+          <RefreshPricesButton />
+          <Link
+            href="/transactions?new=1"
+            className="rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-white hover:bg-secondary"
+          >
+            + บันทึกซื้อขาย
+          </Link>
+        </div>
       </div>
 
       {holdings.length === 0 ? (

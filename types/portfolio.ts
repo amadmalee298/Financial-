@@ -41,7 +41,7 @@ export type Position<T extends LedgerTransaction = LedgerTransaction> = {
   oversold: T | null;
 };
 
-export type PriceSource = "manual" | "last_trade";
+export type PriceSource = "manual" | "market" | "last_trade";
 
 export type Holding = Position & {
   stockId: string;

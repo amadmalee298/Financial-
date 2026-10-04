@@ -47,7 +47,7 @@ export function WatchCard({ item }: { item: WatchItem }) {
           </span>
           {item.price && (
             <span className="block text-[11px] text-slate-400">
-              {item.price.source === "manual" ? "กรอกเอง" : "รายการล่าสุด"} · {formatThaiDate(item.price.date)}
+              {{ manual: "กรอกเอง", market: "ราคาตลาด", last_trade: "รายการล่าสุด" }[item.price.source]} · {formatThaiDate(item.price.date)}
             </span>
           )}
         </Link>

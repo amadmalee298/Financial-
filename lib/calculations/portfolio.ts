@@ -1,5 +1,6 @@
-import { Decimal, toDecimal } from "@/lib/utils/decimal";
-import type { Holding, LedgerTransaction, PortfolioSummary, PriceSource } from "@/types/portfolio";
+import { Decimal } from "@/lib/utils/decimal";
+import type { Holding, LedgerTransaction, PortfolioSummary } from "@/types/portfolio";
+import { pickPrice } from "./price";
 import { compareTransactions, ratio, replayPosition, unrealized } from "./profitLoss";
 
 export type PortfolioTransaction = LedgerTransaction & {
@@ -8,6 +9,9 @@ export type PortfolioTransaction = LedgerTransaction & {
 };
 
 export type ManualPrice = { stock_id: string; price: Decimal.Value; price_date: string };
+
+/** Newest stored market close for one stock. */
+export type MarketPrice = { stock_id: string; close: Decimal.Value; price_date: string };
 
 const ZERO = new Decimal(0);
 
@@ -20,6 +24,7 @@ export function buildHoldings(
   transactions: PortfolioTransaction[],
   manualPrices: ManualPrice[] = [],
   dividends: Map<string, Decimal> = new Map(),
+  marketPrices: MarketPrice[] = [],
 ): Holding[] {
   const byStock = new Map<string, PortfolioTransaction[]>();
   for (const tx of transactions) {
@@ -27,18 +32,22 @@ export function buildHoldings(
     if (list) list.push(tx);
     else byStock.set(tx.stock_id, [tx]);
   }
-  const prices = new Map(manualPrices.map((p) => [p.stock_id, p]));
+  const manualByStock = new Map(manualPrices.map((p) => [p.stock_id, p]));
+  const marketByStock = new Map(marketPrices.map((p) => [p.stock_id, p]));
 
   const holdings = [...byStock.entries()].map(([stockId, txs]): Holding => {
     const position = replayPosition(txs);
     const lastTrade = [...txs].sort(compareTransactions).at(-1)!;
-    const manual = prices.get(stockId);
+    const manual = manualByStock.get(stockId);
+    const market = marketByStock.get(stockId);
 
-    // Prefer the user's manual price unless a trade is more recent.
-    const useManual = manual !== undefined && manual.price_date >= lastTrade.trade_date;
-    const price = toDecimal(useManual ? manual.price : lastTrade.price);
-    const priceDate = useManual ? manual.price_date : lastTrade.trade_date;
-    const priceSource: PriceSource = useManual ? "manual" : "last_trade";
+    // Newest price wins: manual, market close, or the last trade.
+    const current = pickPrice([
+      manual && { price: manual.price, date: manual.price_date, source: "manual" },
+      market && { price: market.close, date: market.price_date, source: "market" },
+      { price: lastTrade.price, date: lastTrade.trade_date, source: "last_trade" },
+    ])!;
+    const { price, date: priceDate, source: priceSource } = current;
 
     const { marketValue, unrealizedPL, unrealizedPct } = unrealized(position, price);
     const stockDividends = dividends.get(stockId) ?? ZERO;

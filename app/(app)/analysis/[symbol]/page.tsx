@@ -66,7 +66,7 @@ export default async function AnalysisPage({ params, searchParams }: Props) {
     price && {
       label: "ราคาปัจจุบัน",
       value: formatNumber(price.price, 2),
-      hint: `${price.source === "manual" ? "กรอกเอง" : "รายการล่าสุด"} · ${formatThaiDate(price.date)}`,
+      hint: `${{ manual: "กรอกเอง", market: "ราคาตลาด", last_trade: "รายการล่าสุด" }[price.source]} · ${formatThaiDate(price.date)}`,
     },
     v.peAtPrice && { label: "P/E ที่ราคานี้", value: `${v.peAtPrice.toFixed(2)} เท่า`, hint: "ราคา ÷ EPS" },
     v.marginOfSafety && {

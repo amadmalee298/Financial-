@@ -38,7 +38,7 @@ export function PriceForm({
       <input type="hidden" name="stock_id" value={stockId} />
       <input type="hidden" name="return_to" value={returnTo} />
       <p className="text-sm text-slate-500">
-        กรอกราคาปัจจุบันของ {symbol} เพื่อคำนวณมูลค่าและกำไร/ขาดทุน (ระบบดึงราคาอัตโนมัติจะมาใน Phase 6)
+        กรอกราคาปัจจุบันของ {symbol} เองได้ ราคานี้ใช้แทนราคาตลาดจนกว่าจะมีราคาปิดที่ใหม่กว่าวันที่ที่ระบุ
       </p>
       <div className="grid gap-4 sm:grid-cols-2">
         <Input id="price" name="price" label="ราคาต่อหุ้น (บาท)" inputMode="decimal" defaultValue={currentPrice} required autoFocus />
@@ -62,7 +62,7 @@ export function PriceForm({
             }
             className="mr-auto rounded-lg px-3 py-2.5 text-sm text-slate-500 hover:bg-slate-100"
           >
-            {clearing ? "กำลังล้าง…" : "ใช้ราคาจากรายการล่าสุด"}
+            {clearing ? "กำลังล้าง…" : "ล้างราคาที่กรอกเอง"}
           </button>
         )}
         <Link href={returnTo} scroll={false} className="rounded-lg px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-100">

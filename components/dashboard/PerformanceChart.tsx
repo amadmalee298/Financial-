@@ -92,6 +92,10 @@ export function PerformanceChart({ points }: { points: ChartPoint[] }) {
     return before ? [{ ...before, t: from }, ...inRange] : inRange;
   }, [points, range]);
 
+  // Mostly real daily closes → draw a continuous line; mostly estimates only
+  // change on trade dates, so keep the honest steps.
+  const dense = data.length > 0 && data.filter((p) => !p.estimated).length / data.length > 0.5;
+
   const spanDays = data.length > 1 ? (data.at(-1)!.t - data[0].t) / 86_400_000 : 0;
   const tickFormat = (t: number) => (spanDays > 120 ? monthYear.format(t) : shortDate.format(t));
 
@@ -154,8 +158,7 @@ export function PerformanceChart({ points }: { points: ChartPoint[] }) {
               />
               <Tooltip content={ChartTooltip} cursor={{ stroke: "#94a3b8", strokeWidth: 1 }} />
               <Area
-                // Estimated values only change on trade dates, so step between points.
-                type="stepAfter"
+                type={dense ? "linear" : "stepAfter"}
                 dataKey="marketValue"
                 stroke={VALUE_COLOR}
                 strokeWidth={2}
@@ -179,7 +182,8 @@ export function PerformanceChart({ points }: { points: ChartPoint[] }) {
       )}
 
       <p className="mt-2 text-xs text-slate-400">
-        มูลค่าย้อนหลังประมาณจากราคาซื้อขายล่าสุด ณ วันนั้น และบันทึกค่าจริงทุกวันที่เปิดหน้านี้ · ราคาย้อนหลังจริงจะมาใน Phase 6
+        ราคาย้อนหลังใช้ราคาปิดรายวันจากตลาดเมื่อกด “อัปเดตราคา” ช่วงที่ยังไม่มีราคาปิดจะประมาณจากราคาซื้อขายล่าสุด (ระบุว่า “ประมาณ”) ·
+        บันทึกมูลค่าจริงทุกวันที่เปิดหน้านี้
       </p>
 
       <details className="mt-2 text-sm">

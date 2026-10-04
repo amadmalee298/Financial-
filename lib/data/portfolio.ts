@@ -2,6 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { buildHoldings, summarize, type PortfolioTransaction } from "@/lib/calculations/portfolio";
+import { latestClose, pickPrice, type CurrentPrice } from "@/lib/calculations/price";
 import { dividendsByStock } from "@/lib/calculations/dividend";
 import { buildPerformance } from "@/lib/calculations/performance";
 import { totalsByPeriod } from "@/lib/calculations/reports";
@@ -11,6 +12,22 @@ import { Decimal } from "@/lib/utils/decimal";
 
 type Transaction = PortfolioTransaction & { commission: number; fees: number; vat: number };
 
+/** Market closes older than this many days are not used as a "current" price. */
+const RECENT_PRICE_DAYS = 30;
+
+const daysAgo = (days: number) => new Date(Date.now() - days * 86_400_000).toISOString().slice(0, 10);
+
+/** Read every row of a query, 1000 at a time (PostgREST caps each response). */
+async function fetchAll<T>(page: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: unknown }>) {
+  const rows: T[] = [];
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await page(from, from + 999);
+    if (error || !data) throw new Error("โหลดข้อมูลราคาไม่สำเร็จ");
+    rows.push(...data);
+    if (data.length < 1000) return rows;
+  }
+}
+
 /**
  * Raw portfolio data for the signed-in user. RLS scopes every query to the
  * current user. Cached per request so several components can share it.
@@ -18,7 +35,7 @@ type Transaction = PortfolioTransaction & { commission: number; fees: number; va
 const getPortfolioData = cache(async () => {
   const supabase = await createClient();
 
-  const [transactions, prices, dividends] = await Promise.all([
+  const [transactions, prices, dividends, watchlist] = await Promise.all([
     supabase
       .from("transactions")
       .select(
@@ -27,19 +44,39 @@ const getPortfolioData = cache(async () => {
       .returns<Transaction[]>(),
     supabase.from("manual_prices").select("stock_id, price, price_date"),
     supabase.from("dividends").select("stock_id, payment_date, xd_date, net_amount, gross_amount, withholding_tax"),
+    supabase.from("watchlists").select("stock_id"),
   ]);
 
-  if (transactions.error || prices.error || dividends.error) {
+  if (transactions.error || prices.error || dividends.error || watchlist.error) {
     throw new Error("โหลดข้อมูลพอร์ตไม่สำเร็จ");
   }
-  return { transactions: transactions.data, prices: prices.data, dividends: dividends.data };
+
+  // Market prices are shared by everyone, so ask only for the stocks this
+  // user holds or watches, and only recent days (enough for a current price).
+  const stockIds = [...new Set([...transactions.data, ...watchlist.data].map((row) => row.stock_id))];
+  const recent = stockIds.length
+    ? await supabase
+        .from("stock_prices")
+        .select("stock_id, price_date, close")
+        .in("stock_id", stockIds)
+        .gte("price_date", daysAgo(RECENT_PRICE_DAYS))
+    : { data: [], error: null };
+  if (recent.error) throw new Error("โหลดข้อมูลราคาไม่สำเร็จ");
+
+  const market = [...latestClose(recent.data)].map(([stock_id, p]) => ({
+    stock_id,
+    close: p.price,
+    price_date: p.date,
+  }));
+
+  return { transactions: transactions.data, prices: prices.data, dividends: dividends.data, market };
 });
 
 /** Holdings and summary, computed with the average-cost method. */
 export const getPortfolio = cache(async () => {
-  const { transactions, prices, dividends } = await getPortfolioData();
+  const { transactions, prices, dividends, market } = await getPortfolioData();
   const byStock = dividendsByStock(dividends);
-  const holdings = buildHoldings(transactions, prices, byStock);
+  const holdings = buildHoldings(transactions, prices, byStock, market);
   const held = new Set(holdings.map((h) => h.stockId));
   const otherDividends = [...byStock.entries()]
     .filter(([stockId]) => !held.has(stockId))
@@ -54,7 +91,22 @@ export const getPerformance = cache(async () => {
     getPortfolioData(),
     supabase.from("portfolio_snapshots").select("snapshot_date, market_value, cost_basis"),
   ]);
-  return buildPerformance(transactions, prices, snapshots.data ?? [], todayISO());
+
+  // Full daily history, but only for stocks this user has traded.
+  const stockIds = [...new Set(transactions.map((tx) => tx.stock_id))];
+  const closes = stockIds.length
+    ? await fetchAll((from, to) =>
+        supabase
+          .from("stock_prices")
+          .select("stock_id, price_date, close")
+          .in("stock_id", stockIds)
+          .order("price_date")
+          .order("stock_id")
+          .range(from, to),
+      )
+    : [];
+
+  return buildPerformance(transactions, prices, snapshots.data ?? [], todayISO(), closes);
 });
 
 /** Yearly and monthly totals for the reports page. */
@@ -103,18 +155,31 @@ export const getShareHistory = cache(async () => {
   return history;
 });
 
-export type CurrentPrice = { price: Decimal; date: string; source: "manual" | "last_trade" };
+export type { CurrentPrice };
 
 /**
- * Best known current price per stock id: the holding's price for stocks the
- * user has traded, otherwise their manual price. Stocks with neither are absent.
+ * Best known current price per stock id (newest of manual, market close and,
+ * for traded stocks, the last trade). Stocks with none are absent.
  */
 export const getCurrentPrices = cache(async () => {
-  const [{ prices }, { holdings }] = await Promise.all([getPortfolioData(), getPortfolio()]);
+  const [{ prices, market }, { holdings }] = await Promise.all([getPortfolioData(), getPortfolio()]);
   const result = new Map<string, CurrentPrice>();
-  for (const p of prices) {
-    result.set(p.stock_id, { price: new Decimal(p.price), date: p.price_date, source: "manual" });
+
+  for (const m of market) {
+    const price = pickPrice([
+      { price: m.close, date: m.price_date, source: "market" },
+      ...prices
+        .filter((p) => p.stock_id === m.stock_id)
+        .map((p) => ({ price: p.price, date: p.price_date, source: "manual" as const })),
+    ]);
+    if (price) result.set(m.stock_id, price);
   }
+  for (const p of prices) {
+    if (!result.has(p.stock_id)) {
+      result.set(p.stock_id, { price: new Decimal(p.price), date: p.price_date, source: "manual" });
+    }
+  }
+  // Traded stocks: the holding already weighed manual, market and last trade.
   for (const h of holdings) {
     result.set(h.stockId, { price: h.price, date: h.priceDate, source: h.priceSource });
   }

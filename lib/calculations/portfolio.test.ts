@@ -158,3 +158,27 @@ describe("allocation", () => {
     ]);
   });
 });
+
+describe("price selection with market data", () => {
+  const txs = [tx("BUY", "2026-01-05", "100", "10", "0", "PTT")];
+
+  it("uses a newer market close over the last trade", () => {
+    const [h] = buildHoldings(txs, [], new Map(), [{ stock_id: "PTT", close: "12.5", price_date: "2026-02-01" }]);
+    expect(h.priceSource).toBe("market");
+    expect(h.price.toString()).toBe("12.5");
+    expect(h.marketValue.toString()).toBe("1250");
+  });
+
+  it("lets a manual price win only until the market has a newer close", () => {
+    const manual = [{ stock_id: "PTT", price: "15", price_date: "2026-02-01" }];
+    const sameDay = buildHoldings(txs, manual, new Map(), [{ stock_id: "PTT", close: "12.5", price_date: "2026-02-01" }]);
+    expect(sameDay[0].priceSource).toBe("manual");
+    const newer = buildHoldings(txs, manual, new Map(), [{ stock_id: "PTT", close: "12.5", price_date: "2026-02-02" }]);
+    expect(newer[0].priceSource).toBe("market");
+  });
+
+  it("ignores a market close older than the last trade", () => {
+    const [h] = buildHoldings(txs, [], new Map(), [{ stock_id: "PTT", close: "9", price_date: "2026-01-01" }]);
+    expect(h.priceSource).toBe("last_trade");
+  });
+});

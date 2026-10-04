@@ -5,7 +5,7 @@ import { formatThaiDate } from "@/lib/utils/date";
 
 /** Current price, where it came from, and a link to update it. */
 export function PriceBadge({ holding, returnTo }: { holding: Holding; returnTo: string }) {
-  const source = holding.priceSource === "manual" ? "กรอกเอง" : "จากรายการล่าสุด";
+  const source = { manual: "กรอกเอง", market: "ราคาตลาด", last_trade: "จากรายการล่าสุด" }[holding.priceSource];
   return (
     <Link
       href={`${returnTo}?price=${encodeURIComponent(holding.symbol)}`}

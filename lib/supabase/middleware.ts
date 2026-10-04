@@ -1,7 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
-const PUBLIC_PATHS = ["/login", "/auth"];
+// /api/cron has no user session; the route checks CRON_SECRET itself.
+const PUBLIC_PATHS = ["/login", "/auth", "/api/cron"];
 
 function isPublicPath(pathname: string) {
   return PUBLIC_PATHS.some(

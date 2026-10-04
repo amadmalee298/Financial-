@@ -7,6 +7,7 @@ import { watchStatus, type WatchStatus } from "@/lib/calculations/watchlist";
 import { Card } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
 import { PriceModal } from "@/components/portfolio/PriceModal";
+import { RefreshPricesButton } from "@/components/portfolio/RefreshPricesButton";
 import { WatchCard, type WatchItem } from "@/components/watchlist/WatchCard";
 import { WatchForm, type WatchFormValues } from "@/components/watchlist/WatchForm";
 
@@ -80,20 +81,23 @@ export default async function WatchlistPage({ searchParams }: { searchParams: Se
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold">Watchlist</h1>
           {inBuyZone > 0 && (
             <p className="text-sm text-positive">✓ {inBuyZone} หุ้นถึงราคาที่อยากซื้อแล้ว</p>
           )}
         </div>
-        <Link
-          href="/watchlist?new=1"
-          scroll={false}
-          className="rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-white hover:bg-secondary"
-        >
-          + เพิ่มหุ้น
-        </Link>
+        <div className="flex flex-wrap items-start justify-end gap-2">
+          <RefreshPricesButton />
+          <Link
+            href="/watchlist?new=1"
+            scroll={false}
+            className="rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-white hover:bg-secondary"
+          >
+            + เพิ่มหุ้น
+          </Link>
+        </div>
       </div>
 
       {items.length > 0 ? (
@@ -109,7 +113,7 @@ export default async function WatchlistPage({ searchParams }: { searchParams: Se
       )}
 
       <p className="text-xs text-slate-400">
-        ราคามาจากที่กรอกเองหรือรายการซื้อขายล่าสุด · ราคาอัตโนมัติจะมาใน Phase 6
+        ราคาปิดล่าสุดจากตลาดเมื่อกด “อัปเดตราคา” (ราคาปิดรายวัน ไม่ใช่ราคาเรียลไทม์) · หรือกรอกเอง / ใช้ราคาจากรายการซื้อขายล่าสุด
       </p>
 
       {formValues && (
