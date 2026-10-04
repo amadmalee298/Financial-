@@ -12,7 +12,10 @@ export function DeleteTransactionButton({ id, label }: { id: string; label: stri
       disabled={pending}
       onClick={() => {
         if (confirm(`ลบรายการ ${label}?`)) {
-          startTransition(() => deleteTransaction(id));
+          startTransition(async () => {
+            const result = await deleteTransaction(id);
+            if (result.error) alert(result.error);
+          });
         }
       }}
       className="rounded-md px-2 py-1 text-xs font-medium text-negative hover:bg-negative/10 disabled:opacity-50"

@@ -3,7 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { netQuantity } from "@/lib/calculations/transaction";
+import { replayPosition } from "@/lib/calculations/profitLoss";
+import { transactionTotal } from "@/lib/calculations/transaction";
+import { formatThaiDate } from "@/lib/utils/date";
 import { Decimal, parseDecimal } from "@/lib/utils/decimal";
 import type { TransactionType } from "@/types/transaction";
 
@@ -107,27 +109,37 @@ export async function saveTransaction(
   }
   if (!stock) return { error: "ไม่สามารถเพิ่มหุ้นนี้ได้" };
 
-  // Shares held must never go below zero after this change.
-  let others = supabase
+  // Replay this stock's history in date order: shares held must never go
+  // below zero at any point, including after back-dated entries or edits.
+  const { data: history, error: historyError } = await supabase
     .from("transactions")
-    .select("transaction_type, quantity")
+    .select("id, transaction_type, trade_date, created_at, quantity, price, total_amount")
     .eq("stock_id", stock.id);
-  if (id) others = others.neq("id", id);
-  const { data: existing, error: existingError } = await others;
-  if (existingError) return { error: "โหลดข้อมูลไม่สำเร็จ กรุณาลองใหม่" };
+  if (historyError) return { error: "โหลดข้อมูลไม่สำเร็จ กรุณาลองใหม่" };
 
-  const held = netQuantity([...existing, { transaction_type: type, quantity }]);
-  if (held.isNegative()) {
-    if (type === "BUY") {
+  const candidate = {
+    id: id ?? "new",
+    transaction_type: type,
+    trade_date: tradeDate,
+    created_at: history.find((tx) => tx.id === id)?.created_at ?? new Date().toISOString(),
+    quantity,
+    price,
+    total_amount: transactionTotal({ type, quantity, price, commission, fees, vat }),
+  };
+  const position = replayPosition([...history.filter((tx) => tx.id !== id), candidate]);
+
+  if (position.oversold) {
+    const index = position.entries.findIndex((e) => e.transaction === position.oversold);
+    const before = index > 0 ? position.entries[index - 1].sharesAfter : new Decimal(0);
+    const date = formatThaiDate(position.oversold.trade_date);
+    if (position.oversold === candidate) {
       return {
-        error: `ลดจำนวนไม่ได้ เพราะหุ้น ${symbol} ที่ขายไปแล้วจะมากกว่าที่ซื้อ`,
-        fieldErrors: { quantity: "น้อยกว่าจำนวนที่ขายไปแล้ว" },
+        error: `หุ้น ${symbol} ไม่พอขาย ณ วันที่ ${date} (มี ${before.toString()} หุ้น)`,
+        fieldErrors: { quantity: "เกินจำนวนหุ้นที่มี" },
       };
     }
-    const available = Decimal.max(netQuantity(existing), 0);
     return {
-      error: `จำนวนหุ้น ${symbol} ไม่พอขาย (คงเหลือ ${available.toString()} หุ้น)`,
-      fieldErrors: { quantity: "เกินจำนวนหุ้นที่มี" },
+      error: `บันทึกไม่ได้ เพราะจะทำให้รายการขาย ${symbol} วันที่ ${date} มีหุ้นไม่พอขาย`,
     };
   }
 
@@ -150,13 +162,37 @@ export async function saveTransaction(
 
   if (error) return { error: "บันทึกไม่สำเร็จ กรุณาลองใหม่" };
 
-  revalidatePath("/transactions");
+  revalidatePath("/", "layout");
   redirect("/transactions");
 }
 
-export async function deleteTransaction(id: string) {
+export async function deleteTransaction(id: string): Promise<{ error?: string }> {
   const supabase = await createClient();
-  // RLS limits this to the signed-in user's own rows.
-  await supabase.from("transactions").delete().eq("id", id);
-  revalidatePath("/transactions");
+
+  // RLS limits both queries to the signed-in user's own rows.
+  const { data: target } = await supabase
+    .from("transactions")
+    .select("stock_id, transaction_type, stock:stocks(symbol)")
+    .eq("id", id)
+    .maybeSingle();
+  if (!target) return { error: "ไม่พบรายการนี้" };
+
+  if (target.transaction_type === "BUY") {
+    const { data: history } = await supabase
+      .from("transactions")
+      .select("id, transaction_type, trade_date, created_at, quantity, price, total_amount")
+      .eq("stock_id", target.stock_id)
+      .neq("id", id);
+    const position = replayPosition(history ?? []);
+    if (position.oversold) {
+      return {
+        error: `ลบไม่ได้ เพราะรายการขาย ${target.stock?.symbol ?? ""} วันที่ ${formatThaiDate(position.oversold.trade_date)} จะมีหุ้นไม่พอขาย`,
+      };
+    }
+  }
+
+  const { error } = await supabase.from("transactions").delete().eq("id", id);
+  if (error) return { error: "ลบไม่สำเร็จ กรุณาลองใหม่" };
+  revalidatePath("/", "layout");
+  return {};
 }

@@ -1,6 +1,6 @@
 import type Decimal from "decimal.js";
 
-type Amount = number | string | Decimal;
+type Amount = Decimal.Value;
 
 const thb = new Intl.NumberFormat("th-TH", {
   style: "currency",
@@ -23,4 +23,11 @@ export function formatNumber(value: Amount, minDigits = 0, maxDigits = 4) {
     minimumFractionDigits: minDigits,
     maximumFractionDigits: maxDigits,
   }).format(Number(value.toString()));
+}
+
+/** Signed baht amount, e.g. "+฿1,234.00" / "-฿56.00". */
+export function formatSignedTHB(amount: Decimal) {
+  const formatted = formatTHB(amount.abs());
+  if (amount.isZero()) return formatted;
+  return `${amount.isNegative() ? "-" : "+"}${formatted}`;
 }

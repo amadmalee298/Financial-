@@ -61,12 +61,12 @@ Tailwind classes such as `bg-primary`, `text-positive`.
    `http://localhost:3000` and add `http://localhost:3000/auth/confirm` to the
    redirect URLs.
 4. Create the database. Either paste
-   `supabase/migrations/001_initial_schema.sql` and then `supabase/seed.sql`
-   into the Supabase **SQL Editor**, or with the Supabase CLI:
+   each file in `supabase/migrations/` in order (001, 002, …) and then
+   `supabase/seed.sql` into the Supabase **SQL Editor**, or with the Supabase CLI:
 
    ```bash
    npx supabase link --project-ref <your-project-ref>
-   npx supabase db push              # runs supabase/migrations
+   npx supabase db push              # runs every file in supabase/migrations
    psql "$DATABASE_URL" -f supabase/seed.sql
    ```
 
@@ -89,6 +89,7 @@ Tailwind classes such as `bg-primary`, `text-positive`.
 | `stock_analysis`      | Investment journal / fundamentals per stock       |
 | `cash_transactions`   | Deposits and withdrawals                          |
 | `portfolio_snapshots` | Daily portfolio values for performance charts     |
+| `manual_prices`       | Current price entered by the user (per user)      |
 
 - **RLS is on for every table.** User tables only allow the owner
   (`auth.uid() = user_id`) to read or write; `user_id` defaults to the caller.
@@ -104,7 +105,25 @@ Tailwind classes such as `bg-primary`, `text-positive`.
   `npx supabase gen types typescript --linked > types/database.ts`
   (the hand-written version also accepts strings for numeric inserts).
 
-Scripts: `npm run dev`, `npm run build`, `npm run lint`, `npm run typecheck`.
+## Portfolio calculations
+
+`lib/calculations/` (unit-tested in `portfolio.test.ts`) uses the
+**average-cost method**, as Thai brokers do:
+
+| Step | Rule |
+| ---- | ---- |
+| BUY  | shares += qty; cost += amount paid (price × qty + commission + fees + VAT) |
+| SELL | cost of sold = avg cost × qty; realized P/L += net proceeds − cost of sold |
+| Unrealized P/L | shares × current price − remaining cost |
+| Total return | unrealized + realized + dividends |
+
+- Transactions replay by trade date (BUY before SELL on the same day), and
+  saving or deleting is refused if shares would ever go negative.
+- Current price: the user's manual price when it is at least as recent as the
+  last trade, otherwise the last trade price. Phase 6 adds automatic prices.
+
+Scripts: `npm run dev`, `npm run build`, `npm run lint`, `npm run typecheck`,
+`npm test`.
 
 ## Project Structure
 
@@ -116,16 +135,18 @@ app/
   login/            login + sign-up page and server actions
   auth/             email confirm, sign-out, error routes
 components/
-  layout/  ui/  auth/  stocks/  transactions/
+  layout/  ui/  auth/  stocks/  transactions/  portfolio/  dashboard/
 app/api/stocks      GET ?q= stock search
 lib/
   supabase/         client.ts (browser), server.ts, middleware.ts (session refresh)
-  calculations/     decimal-safe financial math
+  calculations/     decimal-safe financial math (average cost, P/L)
+  data/             server-side loaders (getPortfolio)
   utils/            currency.ts, date.ts, decimal.ts, redirect.ts
-types/              database.ts (schema types), transaction.ts
+types/              database.ts (schema types), transaction.ts, portfolio.ts
 proxy.ts            Next.js 16 proxy (formerly middleware.ts): auth guard
 supabase/
   migrations/001_initial_schema.sql   tables, RLS, triggers
+  migrations/002_manual_prices.sql    per-user manual prices
   seed.sql                           common SET stocks
 ```
 
@@ -139,7 +160,7 @@ Notes:
 
 - [x] **Phase 1** — Next.js + Tailwind + Supabase + Login
 - [x] **Phase 2** — Database + RLS + Stocks + Transactions
-- [ ] **Phase 3** — Portfolio + Cost Average + Realized / Unrealized P/L
+- [x] **Phase 3** — Portfolio + Cost Average + Realized / Unrealized P/L
 - [ ] **Phase 4** — Dashboard + Charts + Allocation + Performance
 - [ ] **Phase 5** — Dividend + Watchlist + Investment Journal
 - [ ] **Phase 6** — Stock Price API + Automatic price update + SET data

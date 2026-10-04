@@ -1,4 +1,4 @@
-// Database types for supabase/migrations/001_initial_schema.sql.
+// Database types for supabase/migrations (001_initial_schema, 002_manual_prices).
 // Same shape as `npx supabase gen types typescript`; regenerate with that
 // command once the project is linked, and keep this file in sync otherwise.
 //
@@ -319,6 +319,38 @@ export type Database = {
           created_at?: string;
         };
         Relationships: [];
+      };
+      manual_prices: {
+        Row: {
+          user_id: string;
+          stock_id: string;
+          price: number;
+          price_date: string;
+          updated_at: string;
+        };
+        Insert: {
+          user_id?: string;
+          stock_id: string;
+          price: number | string;
+          price_date?: string;
+          updated_at?: string;
+        };
+        Update: {
+          user_id?: string;
+          stock_id?: string;
+          price?: number | string;
+          price_date?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "manual_prices_stock_id_fkey";
+            columns: ["stock_id"];
+            isOneToOne: false;
+            referencedRelation: "stocks";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       portfolio_snapshots: {
         Row: {

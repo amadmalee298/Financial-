@@ -1,4 +1,4 @@
-import { Decimal, toDecimal } from "@/lib/utils/decimal";
+import { type Decimal, toDecimal } from "@/lib/utils/decimal";
 import type { TransactionType } from "@/types/transaction";
 
 export type TransactionAmounts = {
@@ -34,15 +34,4 @@ export function transactionTotal(input: TransactionAmounts) {
 /** Thai brokers charge 7% VAT on commission. */
 export function vatOnCommission(commission: Decimal.Value | null | undefined) {
   return toDecimal(commission).times("0.07").toDecimalPlaces(2);
-}
-
-/** Net shares held: Σ BUY quantity − Σ SELL quantity. */
-export function netQuantity(rows: { transaction_type: TransactionType; quantity: Decimal.Value }[]) {
-  return rows.reduce(
-    (sum, row) =>
-      row.transaction_type === "BUY"
-        ? sum.plus(toDecimal(row.quantity))
-        : sum.minus(toDecimal(row.quantity)),
-    new Decimal(0),
-  );
 }

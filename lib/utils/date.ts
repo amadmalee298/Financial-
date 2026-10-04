@@ -9,3 +9,8 @@ const thaiDate = new Intl.DateTimeFormat("th-TH", {
 export function formatThaiDate(date: Date | string) {
   return thaiDate.format(typeof date === "string" ? new Date(date) : date);
 }
+
+/** Today's date in Bangkok as YYYY-MM-DD (for date inputs). */
+export function todayISO() {
+  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Bangkok" }).format(new Date());
+}

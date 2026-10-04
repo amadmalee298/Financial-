@@ -7,14 +7,11 @@ import { Modal } from "@/components/ui/Modal";
 import { TransactionForm, type TransactionFormValues } from "@/components/transactions/TransactionForm";
 import { TransactionTable } from "@/components/transactions/TransactionTable";
 import type { TransactionWithStock } from "@/types/transaction";
+import { todayISO } from "@/lib/utils/date";
 
 export const metadata: Metadata = { title: "รายการซื้อขาย" };
 
 type SearchParams = Promise<{ new?: string; edit?: string; symbol?: string; type?: string }>;
-
-function today() {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Bangkok" }).format(new Date());
-}
 
 export default async function TransactionsPage({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;
@@ -59,7 +56,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
     formValues = {
       symbol: params.symbol?.toUpperCase(),
       transaction_type: "BUY",
-      trade_date: today(),
+      trade_date: todayISO(),
       quantity: "",
       price: "",
       commission: "",
