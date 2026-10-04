@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getPerformance, getPortfolio, recordSnapshot } from "@/lib/data/portfolio";
+import { after } from "next/server";
+import { getPerformance, getPortfolio, saveSnapshot } from "@/lib/data/portfolio";
+import { createClient } from "@/lib/supabase/server";
 import { allocation } from "@/lib/calculations/allocation";
 import { Card } from "@/components/ui/Card";
 import { AllocationChart, type AllocationRow } from "@/components/dashboard/AllocationChart";
@@ -18,7 +20,13 @@ const toRows = (slices: AllocationSlice[]): AllocationRow[] =>
 
 export default async function DashboardPage() {
   const [{ holdings, summary }, performance] = await Promise.all([getPortfolio(), getPerformance()]);
-  await recordSnapshot();
+
+  // Save today's value after the page has been sent, so it never delays the
+  // response. The client is created now because cookies() is unavailable later.
+  if (holdings.length > 0) {
+    const supabase = await createClient();
+    after(() => saveSnapshot(supabase, summary));
+  }
 
   if (holdings.length === 0) {
     return (

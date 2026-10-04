@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { startTransition, useActionState, useState } from "react";
 import { signIn, signUp, type AuthState } from "@/app/login/actions";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -35,7 +35,16 @@ export function LoginForm({ next }: { next: string }) {
         ))}
       </div>
 
-      <form action={isSignIn ? signInAction : signUpAction} className="flex flex-col gap-4">
+      <form
+        // Submit via onSubmit rather than `action` so React does not clear the
+        // fields (the email!) when the server rejects the password.
+        onSubmit={(e) => {
+          e.preventDefault();
+          const formData = new FormData(e.currentTarget);
+          startTransition(() => (isSignIn ? signInAction : signUpAction)(formData));
+        }}
+        className="flex flex-col gap-4"
+      >
         <input type="hidden" name="next" value={next} />
         <Input
           id="email"

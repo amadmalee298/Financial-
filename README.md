@@ -141,6 +141,38 @@ Tailwind classes such as `bg-primary`, `text-positive`.
 - Chart colors: value `#2a78d6`, cost `#eb6834` (a validated
   colorblind-safe pair).
 
+## Performance
+
+Almost all of a page's time is round trips to Supabase, so the cost depends on
+how far the web server is from the database and how many calls are made one
+after another.
+
+- **Put the web server in the same region as Supabase.** This is the biggest
+  factor and is a setting, not code. A server in the US and a database in
+  Singapore adds roughly 200 ms to every call. On Vercel: *Project Settings →
+  Functions → Function Region*, pick the region next to your Supabase project
+  (Singapore = `sin1`), then redeploy.
+- **Use asymmetric JWT signing keys** (Supabase dashboard → *Project Settings →
+  JWT Keys*; new projects use them). The proxy and layout then check the login
+  with `getClaims()` locally, with no call to Supabase Auth at all. Projects on
+  the legacy shared secret still work: supabase-js falls back to one Auth call.
+- **Calls are made in as few sequential steps as possible**: a page needs two
+  steps (your rows, then prices) instead of four, price history is read in
+  parallel pages (PostgREST returns at most 1000 rows per request), and the
+  daily snapshot is saved after the page has been sent (`after()`).
+- **`app/(app)/loading.tsx`** shows a skeleton at once, so a tap reacts
+  immediately instead of freezing until the data arrives. Keep `<Suspense>`
+  out of `app/(app)/layout.tsx`: React reveals streamed boundaries in batches,
+  so an extra boundary there delays the page content behind it.
+- **Measured** with each Supabase call delayed by 100 ms (same machine, before
+  vs after): tapping a menu link reacted in 400–770 ms and now in under 10 ms;
+  opening the dashboard went from 780 ms to a first paint at 56 ms and full
+  content at 448 ms (was 894 ms). These are simulated numbers, not your
+  deployment.
+- Free Supabase projects pause after a week of inactivity and the first request
+  after that is slow; free serverless functions also have a cold start of about
+  a second after sitting idle.
+
 ## PWA and offline use (Phase 7)
 
 The app installs to the home screen and opens full screen on iPhone, iPad

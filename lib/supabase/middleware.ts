@@ -45,15 +45,16 @@ export async function updateSession(request: NextRequest) {
     },
   );
 
-  // Do not run code between createServerClient and getUser():
-  // getUser() revalidates the token with Supabase Auth.
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Do not run code between createServerClient and getClaims(): it also
+  // refreshes an expired session. It verifies the JWT locally when the project
+  // uses asymmetric signing keys (no network call), and falls back to asking
+  // the Auth server for older shared-secret projects.
+  const { data } = await supabase.auth.getClaims();
+  const userId = data?.claims?.sub ?? null;
 
   const { pathname } = request.nextUrl;
 
-  if (!user && !isPublicPath(pathname)) {
+  if (!userId && !isPublicPath(pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.search = "";
@@ -61,14 +62,14 @@ export async function updateSession(request: NextRequest) {
     return redirectWithCookies(url, response);
   }
 
-  if (user && pathname === "/login") {
+  if (userId && pathname === "/login") {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
     url.search = "";
     return redirectWithCookies(url, response);
   }
 
-  if (user) response.headers.set(USER_HEADER, user.id);
+  if (userId) response.headers.set(USER_HEADER, userId);
   return response;
 }
 
