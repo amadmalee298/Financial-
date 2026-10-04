@@ -42,6 +42,7 @@ export function LoginForm({ next }: { next: string }) {
           name="email"
           type="email"
           label="อีเมล"
+          tone="dark"
           autoComplete="email"
           placeholder="you@example.com"
           required
@@ -51,6 +52,7 @@ export function LoginForm({ next }: { next: string }) {
           name="password"
           type="password"
           label="รหัสผ่าน"
+          tone="dark"
           autoComplete={isSignIn ? "current-password" : "new-password"}
           minLength={8}
           required

@@ -1,3 +1,7 @@
+import type Decimal from "decimal.js";
+
+type Amount = number | string | Decimal;
+
 const thb = new Intl.NumberFormat("th-TH", {
   style: "currency",
   currency: "THB",
@@ -7,9 +11,16 @@ const thb = new Intl.NumberFormat("th-TH", {
 
 /**
  * Format an amount as Thai Baht, e.g. ฿485,250.00.
- * Accepts strings so values from Postgres `numeric` columns can be passed
- * through without first being converted to floating point elsewhere.
+ * Formatting is display-only; do the math with Decimal first.
  */
-export function formatTHB(amount: number | string) {
-  return thb.format(Number(amount));
+export function formatTHB(amount: Amount) {
+  return thb.format(Number(amount.toString()));
+}
+
+/** Plain number with grouping, e.g. 1,234.5 → "1,234.50". */
+export function formatNumber(value: Amount, minDigits = 0, maxDigits = 4) {
+  return new Intl.NumberFormat("th-TH", {
+    minimumFractionDigits: minDigits,
+    maximumFractionDigits: maxDigits,
+  }).format(Number(value.toString()));
 }

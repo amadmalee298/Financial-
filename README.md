@@ -60,12 +60,49 @@ Tailwind classes such as `bg-primary`, `text-positive`.
 3. In Supabase **Authentication → URL Configuration**, set Site URL to
    `http://localhost:3000` and add `http://localhost:3000/auth/confirm` to the
    redirect URLs.
-4. Run the app:
+4. Create the database. Either paste
+   `supabase/migrations/001_initial_schema.sql` and then `supabase/seed.sql`
+   into the Supabase **SQL Editor**, or with the Supabase CLI:
+
+   ```bash
+   npx supabase link --project-ref <your-project-ref>
+   npx supabase db push              # runs supabase/migrations
+   psql "$DATABASE_URL" -f supabase/seed.sql
+   ```
+
+5. Run the app:
 
    ```bash
    npm install
    npm run dev
    ```
+
+## Database
+
+| Table                 | Purpose                                           |
+| --------------------- | ------------------------------------------------- |
+| `profiles`            | One row per user, created by trigger on sign-up   |
+| `stocks`              | Shared list of symbols (SET by default)           |
+| `transactions`        | BUY / SELL records                                |
+| `dividends`           | Dividends received                                |
+| `watchlists`          | Stocks to watch, with target prices               |
+| `stock_analysis`      | Investment journal / fundamentals per stock       |
+| `cash_transactions`   | Deposits and withdrawals                          |
+| `portfolio_snapshots` | Daily portfolio values for performance charts     |
+
+- **RLS is on for every table.** User tables only allow the owner
+  (`auth.uid() = user_id`) to read or write; `user_id` defaults to the caller.
+  `stocks` can be read and added to by any signed-in user, but not edited or
+  deleted from the app.
+- `transactions.total_amount` is a generated column, computed with exact
+  `numeric` math: BUY = qty × price + costs, SELL = qty × price − costs.
+- In TypeScript, money math uses `decimal.js` (`lib/utils/decimal.ts`,
+  `lib/calculations/`). Values are sent to Supabase as strings so they are
+  stored without float rounding.
+- `types/database.ts` mirrors the schema. After linking a project you can
+  regenerate it with
+  `npx supabase gen types typescript --linked > types/database.ts`
+  (the hand-written version also accepts strings for numeric inserts).
 
 Scripts: `npm run dev`, `npm run build`, `npm run lint`, `npm run typecheck`.
 
@@ -79,12 +116,17 @@ app/
   login/            login + sign-up page and server actions
   auth/             email confirm, sign-out, error routes
 components/
-  layout/  ui/  auth/
+  layout/  ui/  auth/  stocks/  transactions/
+app/api/stocks      GET ?q= stock search
 lib/
   supabase/         client.ts (browser), server.ts, middleware.ts (session refresh)
-  utils/            currency.ts, date.ts, redirect.ts
+  calculations/     decimal-safe financial math
+  utils/            currency.ts, date.ts, decimal.ts, redirect.ts
+types/              database.ts (schema types), transaction.ts
 proxy.ts            Next.js 16 proxy (formerly middleware.ts): auth guard
-supabase/migrations/
+supabase/
+  migrations/001_initial_schema.sql   tables, RLS, triggers
+  seed.sql                           common SET stocks
 ```
 
 Notes:
@@ -96,7 +138,7 @@ Notes:
 ## Roadmap
 
 - [x] **Phase 1** — Next.js + Tailwind + Supabase + Login
-- [ ] **Phase 2** — Database + RLS + Stocks + Transactions
+- [x] **Phase 2** — Database + RLS + Stocks + Transactions
 - [ ] **Phase 3** — Portfolio + Cost Average + Realized / Unrealized P/L
 - [ ] **Phase 4** — Dashboard + Charts + Allocation + Performance
 - [ ] **Phase 5** — Dividend + Watchlist + Investment Journal
