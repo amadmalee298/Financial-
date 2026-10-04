@@ -152,8 +152,7 @@ after another.
   Singapore adds roughly 200 ms to every call. On Vercel: *Project Settings →
   Functions → Function Region*, pick the region next to your Supabase project
   (Singapore = `sin1`), then redeploy. `vercel.json` also pins
-  `regions: ["sin1"]`; change it if your Supabase project is elsewhere. Settings →
-  *ตรวจความเร็ว* shows the region and commit that answered.
+  `regions: ["sin1"]`; change it if your Supabase project is elsewhere.
 - **Use asymmetric JWT signing keys** (Supabase dashboard → *Project Settings →
   JWT Keys*; new projects use them). The proxy and layout then check the login
   with `getClaims()` locally, with no call to Supabase Auth at all. Projects on
@@ -190,13 +189,6 @@ after another.
   A plain number is an error without a known cause: look for the matching
   `[load-error]` line in Vercel → Logs. A failed login check is never treated as
   "signed out": it is retried, then shown as an error.
-- **Speed check** (*Settings → ตรวจความเร็ว*): shows where the time goes, from
-  the phone itself. It times a plain static file (phone → Vercel), a function
-  with no database (cold start), trivial Supabase queries from the server
-  (distance to the database, with the region the function runs in), and a real
-  dashboard load, then says in plain language what to fix. Target: the
-  dashboard in under 3 seconds. Backed by `GET /api/speed` (signed-in users
-  only; nothing is stored).
 - Free Supabase projects pause after a week of inactivity and the first request
   after that is slow; free serverless functions also have a cold start of about
   a second after sitting idle.
