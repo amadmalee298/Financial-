@@ -179,10 +179,15 @@ after another.
 - **Failures are visible.** A failed load logs its real cause to the server log
   (`[load-error] …`, `[supabase] … giving up`) and shows a friendly page with a
   retry button (`app/error.tsx`, `app/(app)/error.tsx`) instead of Next.js's
-  bare "This page couldn't load". To find the cause of an error, copy the
-  *รหัสข้อผิดพลาด* (digest) from that page and search for it in Vercel →
-  Logs, or look for the `[load-error]` line just before it. A failed login
-  check is never treated as "signed out": it is retried, then shown as an error.
+  bare "This page couldn't load". The page also shows a readable *รหัสข้อผิดพลาด*
+  such as `E-portfolio-PGRST205` (where it failed + the database error code, never
+  messages or data) and, for known codes, what to do: `PGRST205`/`42P01` means a
+  table is missing (run `supabase/setup_all.sql`), `42501`/`PGRST301` a
+  permission or session problem (sign out and in), `FETCH_FAILED`/`TIMEOUT`
+  that the server cannot reach Supabase (paused project, wrong URL, far region).
+  A plain number is an error without a known cause: look for the matching
+  `[load-error]` line in Vercel → Logs. A failed login check is never treated as
+  "signed out": it is retried, then shown as an error.
 - **Speed check** (*Settings → ตรวจความเร็ว*): shows where the time goes, from
   the phone itself. It times a plain static file (phone → Vercel), a function
   with no database (cold start), trivial Supabase queries from the server

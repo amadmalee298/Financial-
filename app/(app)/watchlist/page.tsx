@@ -33,7 +33,7 @@ export default async function WatchlistPage({ searchParams }: { searchParams: Se
     getCurrentPrices(),
     getPortfolio(),
   ]);
-  if (error) throw loadError("โหลด Watchlist ไม่สำเร็จ", error);
+  if (error) throw loadError("watchlist", "โหลด Watchlist ไม่สำเร็จ", error);
 
   const analyzed = new Set((analyses ?? []).map((a) => a.stock_id));
   const items: (WatchItem & { stockId: string })[] = rows

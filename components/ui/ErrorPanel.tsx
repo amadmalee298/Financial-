@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { startTransition } from "react";
+import { explainDigest } from "@/lib/utils/error-digest";
 
 /** Friendly error screen with a retry button; shared by the error boundaries. */
 export function ErrorPanel({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
@@ -32,9 +33,12 @@ export function ErrorPanel({ error, reset }: { error: Error & { digest?: string 
           กลับหน้าภาพรวม
         </Link>
       </div>
+      {explainDigest(error.digest) && (
+        <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">{explainDigest(error.digest)}</p>
+      )}
       {error.digest && (
-        <p className="text-xs text-slate-400">
-          รหัสข้อผิดพลาด {error.digest} — ถ้าเกิดซ้ำ ให้ค้นรหัสนี้ใน Vercel → Logs เพื่อดูสาเหตุจริง
+        <p className="text-xs break-all text-slate-400">
+          รหัสข้อผิดพลาด {error.digest} — ถ้าเกิดซ้ำ ส่งรหัสนี้ให้ผู้ดูแล หรือค้นใน Vercel → Logs เพื่อดูสาเหตุละเอียด
         </p>
       )}
     </div>

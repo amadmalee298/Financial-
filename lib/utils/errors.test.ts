@@ -6,11 +6,11 @@ afterEach(() => vi.restoreAllMocks());
 describe("loadError", () => {
   it("logs the real causes and returns a generic error", () => {
     const spy = vi.spyOn(console, "error").mockImplementation(() => {});
-    const error = loadError("โหลดไม่สำเร็จ", { code: "PGRST301", message: "JWT expired", hint: "refresh it" }, null, new TypeError("fetch failed"));
+    const error = loadError("portfolio", "โหลดไม่สำเร็จ", { code: "PGRST301", message: "JWT expired", hint: "refresh it" }, null, new TypeError("fetch failed"));
 
     expect(error.message).toBe("โหลดไม่สำเร็จ");
     const line = spy.mock.calls[0][0] as string;
-    expect(line).toContain("[load-error] โหลดไม่สำเร็จ");
+    expect(line).toContain("[load-error] portfolio: โหลดไม่สำเร็จ");
     expect(line).toContain("PGRST301 | JWT expired | refresh it");
     expect(line).toContain("TypeError: fetch failed");
   });
@@ -18,15 +18,21 @@ describe("loadError", () => {
   it("includes the cause that Node hides behind 'fetch failed'", () => {
     const spy = vi.spyOn(console, "error").mockImplementation(() => {});
     const cause = Object.assign(new Error("Connect Timeout Error"), { name: "ConnectTimeoutError", code: "UND_ERR_CONNECT_TIMEOUT" });
-    loadError("x", new TypeError("fetch failed", { cause }));
+    loadError("x", "y", new TypeError("fetch failed", { cause }));
     const line = spy.mock.calls[0][0] as string;
     expect(line).toContain("TypeError: fetch failed");
     expect(line).toContain("ConnectTimeoutError: Connect Timeout Error [UND_ERR_CONNECT_TIMEOUT]");
   });
 
+  it("stamps a readable digest on the error, for Next to show on the error page", () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    const error = loadError("transactions", "โหลดไม่สำเร็จ", { code: "PGRST205", message: "Could not find the table", details: "secret row data" });
+    expect((error as Error & { digest?: string }).digest).toBe("E-transactions-PGRST205");
+  });
+
   it("still logs when no cause is given", () => {
     const spy = vi.spyOn(console, "error").mockImplementation(() => {});
-    loadError("x");
+    loadError("x", "y");
     expect(spy.mock.calls[0][0]).toContain("no detail");
   });
 });
