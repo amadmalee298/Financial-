@@ -151,7 +151,9 @@ after another.
   factor and is a setting, not code. A server in the US and a database in
   Singapore adds roughly 200 ms to every call. On Vercel: *Project Settings →
   Functions → Function Region*, pick the region next to your Supabase project
-  (Singapore = `sin1`), then redeploy.
+  (Singapore = `sin1`), then redeploy. `vercel.json` also pins
+  `regions: ["sin1"]`; change it if your Supabase project is elsewhere. Settings →
+  *ตรวจความเร็ว* shows the region and commit that answered.
 - **Use asymmetric JWT signing keys** (Supabase dashboard → *Project Settings →
   JWT Keys*; new projects use them). The proxy and layout then check the login
   with `getClaims()` locally, with no call to Supabase Auth at all. Projects on

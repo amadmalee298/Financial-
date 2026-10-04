@@ -40,6 +40,7 @@ export function SpeedCheck() {
   const [running, setRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<SpeedMeasurements | null>(null);
+  const [version, setVersion] = useState("-");
 
   async function run() {
     setRunning(true);
@@ -51,7 +52,8 @@ export function SpeedCheck() {
       const page = await timeRequests("/dashboard", 3);
       // Last: a static file the service worker and proxy leave alone = network to Vercel's CDN.
       const net = await timeRequests("/logo.svg", 3);
-      const server = db.last as { region?: string; dbMs?: number[] };
+      const server = db.last as { region?: string; version?: string; dbMs?: number[] };
+      setVersion(server.version ?? "-");
       setResult({
         staticMs: net.times,
         functionMs: fn.times,
@@ -106,6 +108,8 @@ export function SpeedCheck() {
             </dd>
             <dt className="text-slate-500">ภูมิภาคเซิร์ฟเวอร์</dt>
             <dd className="text-right">{result.region}</dd>
+            <dt className="text-slate-500">เวอร์ชันที่ตอบ</dt>
+            <dd className="text-right">{version}</dd>
             <dt className="font-medium">เปิดหน้าภาพรวมจริง ครั้งแรก / ครั้งต่อมา</dt>
             <dd className={`text-right font-semibold tabular-nums ${overTarget ? "text-negative" : "text-positive"}`}>
               {(result.pageMs[0] / 1000).toFixed(1)} / {(pageSteady / 1000).toFixed(1)} วินาที

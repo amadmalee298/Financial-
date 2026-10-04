@@ -24,8 +24,10 @@ export async function GET(request: NextRequest) {
 
   // Set by Vercel (e.g. "sin1"); absent when running elsewhere.
   const region = process.env.VERCEL_REGION ?? "unknown";
+  // Which deployment answered: lets you tell a fresh build from an old one.
+  const version = `${process.env.VERCEL_ENV ?? "local"} ${process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 7) ?? "-"}`;
   if (request.nextUrl.searchParams.get("db") !== "1") {
-    return NextResponse.json({ region }, { headers: NO_STORE });
+    return NextResponse.json({ region, version }, { headers: NO_STORE });
   }
 
   const supabase = await createClient();
@@ -35,5 +37,5 @@ export async function GET(request: NextRequest) {
   const dbMs: number[] = [];
   for (let i = 0; i < 4; i++) dbMs.push(await time(query));
 
-  return NextResponse.json({ region, dbMs }, { headers: NO_STORE });
+  return NextResponse.json({ region, version, dbMs }, { headers: NO_STORE });
 }
