@@ -40,8 +40,10 @@ export function TransactionForm({
   const [price, setPrice] = useState(initial.price);
   const [commission, setCommission] = useState(initial.commission);
   const [fees, setFees] = useState(initial.fees);
-  // New entries default to VAT = 7% of commission; edits keep the saved value.
-  const [autoVat, setAutoVat] = useState(!initial.id);
+  // Auto VAT (7% of commission) for new entries, and for edits whose saved VAT was the default.
+  const [autoVat, setAutoVat] = useState(
+    () => !initial.id || vatOnCommission(valid(initial.commission)).equals(valid(initial.vat)),
+  );
   const [manualVat, setManualVat] = useState(initial.vat);
 
   const vat = autoVat ? vatOnCommission(valid(commission)).toFixed(2) : manualVat;

@@ -138,6 +138,21 @@ Tailwind classes such as `bg-primary`, `text-positive`.
 - Chart colors: value `#2a78d6`, cost `#eb6834` (a validated
   colorblind-safe pair).
 
+## Dividends, Watchlist, Journal (Phase 5)
+
+- **Dividends** (`/dividends`): gross = shares × dividend per share, 10%
+  withholding tax by default (editable), net = gross − tax. The form suggests
+  the shares held before the XD date from your transactions. Dividends count
+  toward portfolio total return and the reports, including dividends on
+  stocks with no recorded buys.
+- **Watchlist** (`/watchlist`): buy price and target per stock, with distance
+  to the buy price, upside to target, and a "reached buy price" flag. Prices
+  come from manual entry or your last trade until Phase 6.
+- **Investment journal** (`/analysis`): one analysis per stock with thesis,
+  strengths, risks and key figures (EPS, P/E, P/BV, ROE, ROA, D/E, yield,
+  fair value, target). Shows P/E at the current price, margin of safety
+  ((fair − price) ÷ fair) and upside.
+
 Scripts: `npm run dev`, `npm run build`, `npm run lint`, `npm run typecheck`,
 `npm test`.
 
@@ -152,12 +167,13 @@ app/
   auth/             email confirm, sign-out, error routes
 components/
   layout/  ui/  auth/  stocks/  transactions/  portfolio/  dashboard/
+  dividends/  watchlist/  analysis/
 app/api/stocks      GET ?q= stock search
 lib/
   supabase/         client.ts (browser), server.ts, middleware.ts (session refresh)
   calculations/     decimal-safe financial math (average cost, P/L)
-  data/             server-side loaders (portfolio, performance, reports)
-  utils/            currency.ts, date.ts, decimal.ts, redirect.ts
+  data/             server-side loaders (portfolio, performance, reports, stocks)
+  utils/            currency.ts, date.ts, decimal.ts, form.ts, format.ts, redirect.ts
 types/              database.ts (schema types), transaction.ts, portfolio.ts
 proxy.ts            Next.js 16 proxy (formerly middleware.ts): auth guard
 supabase/
@@ -178,6 +194,6 @@ Notes:
 - [x] **Phase 2** — Database + RLS + Stocks + Transactions
 - [x] **Phase 3** — Portfolio + Cost Average + Realized / Unrealized P/L
 - [x] **Phase 4** — Dashboard + Charts + Allocation + Performance
-- [ ] **Phase 5** — Dividend + Watchlist + Investment Journal
+- [x] **Phase 5** — Dividend + Watchlist + Investment Journal
 - [ ] **Phase 6** — Stock Price API + Automatic price update + SET data
 - [ ] **Phase 7** — PWA + iPhone / iPad + Offline support

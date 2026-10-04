@@ -21,7 +21,11 @@ export function Modal({
 
   useEffect(() => {
     const dialog = ref.current;
-    if (dialog && !dialog.open) dialog.showModal();
+    if (dialog && !dialog.open) {
+      dialog.showModal();
+      // Start on the first form field rather than the close button.
+      dialog.querySelector<HTMLElement>("input:not([type=hidden]), select, textarea")?.focus();
+    }
   }, []);
 
   const close = () => router.push(closeHref, { scroll: false });

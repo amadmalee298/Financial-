@@ -94,7 +94,14 @@ export default async function PortfolioPage({
         </>
       )}
 
-      {priceTarget && <PriceModal holding={priceTarget} returnTo="/portfolio" />}
+      {priceTarget && (
+        <PriceModal
+          stockId={priceTarget.stockId}
+          symbol={priceTarget.symbol}
+          currentPrice={priceTarget.price.toString()}
+          returnTo="/portfolio"
+        />
+      )}
     </div>
   );
 }

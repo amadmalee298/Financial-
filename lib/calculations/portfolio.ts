@@ -69,14 +69,18 @@ export function buildHoldings(
   );
 }
 
-export function summarize(holdings: Holding[]): PortfolioSummary {
+/**
+ * Portfolio totals. `otherDividends` covers dividends on stocks with no
+ * recorded transactions (e.g. shares bought before using the app).
+ */
+export function summarize(holdings: Holding[], otherDividends: Decimal = ZERO): PortfolioSummary {
   const sum = (pick: (h: Holding) => Decimal) => holdings.reduce((acc, h) => acc.plus(pick(h)), ZERO);
 
   const costBasis = sum((h) => h.costBasis);
   const marketValue = sum((h) => h.marketValue);
   const unrealizedPL = sum((h) => h.unrealizedPL);
   const realizedPL = sum((h) => h.realizedPL);
-  const dividends = sum((h) => h.dividends);
+  const dividends = sum((h) => h.dividends).plus(otherDividends);
 
   return {
     costBasis,

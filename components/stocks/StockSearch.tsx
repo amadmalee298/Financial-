@@ -9,10 +9,12 @@ export function StockSearch({
   stocks,
   defaultValue,
   error,
+  onChange,
 }: {
   stocks: Stock[];
   defaultValue?: string;
   error?: string;
+  onChange?: (symbol: string) => void;
 }) {
   return (
     <>
@@ -26,6 +28,7 @@ export function StockSearch({
         autoCapitalize="characters"
         spellCheck={false}
         defaultValue={defaultValue}
+        onChange={onChange ? (e) => onChange(e.target.value.toUpperCase()) : undefined}
         error={error}
         required
         className="uppercase"

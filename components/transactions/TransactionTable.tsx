@@ -3,7 +3,8 @@ import { formatNumber, formatTHB } from "@/lib/utils/currency";
 import { formatThaiDate } from "@/lib/utils/date";
 import { totalCosts } from "@/lib/calculations/transaction";
 import type { TransactionWithStock } from "@/types/transaction";
-import { DeleteTransactionButton } from "./DeleteTransactionButton";
+import { deleteTransaction } from "@/app/(app)/transactions/actions";
+import { DeleteButton } from "@/components/ui/DeleteButton";
 
 function TypeBadge({ type }: { type: TransactionWithStock["transaction_type"] }) {
   return (
@@ -28,7 +29,7 @@ function Actions({ tx }: { tx: TransactionWithStock }) {
       >
         แก้ไข
       </Link>
-      <DeleteTransactionButton id={tx.id} label={label} />
+      <DeleteButton action={deleteTransaction.bind(null, tx.id)} confirmText={`ลบรายการ ${label}?`} />
     </div>
   );
 }

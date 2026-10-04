@@ -8,3 +8,8 @@ export type Stock = Pick<Tables<"stocks">, "id" | "symbol" | "name" | "market" |
 export type TransactionWithStock = Tables<"transactions"> & {
   stock: Pick<Tables<"stocks">, "symbol" | "name" | "market">;
 };
+
+/** A dividend row joined with its stock, as listed on /dividends. */
+export type DividendWithStock = Tables<"dividends"> & {
+  stock: Pick<Tables<"stocks">, "symbol" | "name">;
+};

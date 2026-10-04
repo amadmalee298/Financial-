@@ -62,11 +62,23 @@ export default async function HoldingPage({ params, searchParams }: Props) {
             <h1 className="text-2xl font-semibold">{holding.symbol}</h1>
             <p className="text-sm text-slate-500">{[holding.name, holding.sector].filter(Boolean).join(" · ")}</p>
           </div>
-          <div className="flex items-center gap-3">
-            <div className="text-right">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="mr-2 text-right">
               <p className="text-xs text-slate-500">ราคาปัจจุบัน</p>
               <PriceBadge holding={holding} returnTo={href} />
             </div>
+            <Link
+              href={`/analysis/${encodeURIComponent(symbol)}`}
+              className="rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm hover:bg-slate-50"
+            >
+              บทวิเคราะห์
+            </Link>
+            <Link
+              href={`/dividends?new=1&symbol=${encodeURIComponent(symbol)}`}
+              className="rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm hover:bg-slate-50"
+            >
+              + ปันผล
+            </Link>
             <Link
               href={`/transactions?new=1&symbol=${encodeURIComponent(symbol)}`}
               className="rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-white hover:bg-secondary"
@@ -91,7 +103,9 @@ export default async function HoldingPage({ params, searchParams }: Props) {
         <CostLedger entries={entries} />
       </section>
 
-      {price && <PriceModal holding={holding} returnTo={href} />}
+      {price && (
+        <PriceModal stockId={holding.stockId} symbol={holding.symbol} currentPrice={holding.price.toString()} returnTo={href} />
+      )}
     </div>
   );
 }
