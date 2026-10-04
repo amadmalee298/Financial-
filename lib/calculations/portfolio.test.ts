@@ -140,3 +140,21 @@ describe("buildHoldings / summarize", () => {
     expect(totals.get("A")!.toString()).toBe("135");
   });
 });
+
+describe("allocation", () => {
+  it("groups by key and folds the tail into อื่นๆ", async () => {
+    const { allocation } = await import("./allocation");
+    const holdings = buildHoldings([
+      tx("BUY", "2026-01-01", "10", "50", "0", "A"),
+      tx("BUY", "2026-01-01", "10", "30", "0", "B"),
+      tx("BUY", "2026-01-01", "10", "15", "0", "C"),
+      tx("BUY", "2026-01-01", "10", "5", "0", "D"),
+    ]);
+    const slices = allocation(holdings, (h) => h.symbol, 3);
+    expect(slices.map((s) => [s.label, s.weight.toString()])).toEqual([
+      ["A", "0.5"],
+      ["B", "0.3"],
+      ["อื่นๆ", "0.2"],
+    ]);
+  });
+});

@@ -122,6 +122,22 @@ Tailwind classes such as `bg-primary`, `text-positive`.
 - Current price: the user's manual price when it is at least as recent as the
   last trade, otherwise the last trade price. Phase 6 adds automatic prices.
 
+## Dashboard charts (Phase 4)
+
+- **Performance**: portfolio value vs cost over time (Recharts), with
+  1M / 3M / 6M / YTD / 1Y / all ranges and a table view. Cost is exact.
+  Past values are estimated at the last known trade/manual price on each
+  date, and a real snapshot is saved to `portfolio_snapshots` each day the
+  dashboard is opened. A snapshot whose cost basis no longer matches (after a
+  back-dated entry) is ignored.
+- **Allocation**: weight by stock or by sector, top 5 + others.
+- **Return per stock**: unrealized + realized + dividends, as bars diverging
+  from zero (direction and sign, not only color, show gain vs loss).
+- **Reports** page: yearly and monthly buys, sells, realized P/L, dividends
+  and fees.
+- Chart colors: value `#2a78d6`, cost `#eb6834` (a validated
+  colorblind-safe pair).
+
 Scripts: `npm run dev`, `npm run build`, `npm run lint`, `npm run typecheck`,
 `npm test`.
 
@@ -140,7 +156,7 @@ app/api/stocks      GET ?q= stock search
 lib/
   supabase/         client.ts (browser), server.ts, middleware.ts (session refresh)
   calculations/     decimal-safe financial math (average cost, P/L)
-  data/             server-side loaders (getPortfolio)
+  data/             server-side loaders (portfolio, performance, reports)
   utils/            currency.ts, date.ts, decimal.ts, redirect.ts
 types/              database.ts (schema types), transaction.ts, portfolio.ts
 proxy.ts            Next.js 16 proxy (formerly middleware.ts): auth guard
@@ -161,7 +177,7 @@ Notes:
 - [x] **Phase 1** — Next.js + Tailwind + Supabase + Login
 - [x] **Phase 2** — Database + RLS + Stocks + Transactions
 - [x] **Phase 3** — Portfolio + Cost Average + Realized / Unrealized P/L
-- [ ] **Phase 4** — Dashboard + Charts + Allocation + Performance
+- [x] **Phase 4** — Dashboard + Charts + Allocation + Performance
 - [ ] **Phase 5** — Dividend + Watchlist + Investment Journal
 - [ ] **Phase 6** — Stock Price API + Automatic price update + SET data
 - [ ] **Phase 7** — PWA + iPhone / iPad + Offline support
