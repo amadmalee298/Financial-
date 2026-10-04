@@ -60,7 +60,9 @@ Tailwind classes such as `bg-primary`, `text-positive`.
 3. In Supabase **Authentication → URL Configuration**, set Site URL to
    `http://localhost:3000` and add `http://localhost:3000/auth/confirm` to the
    redirect URLs.
-4. Create the database. Either paste
+4. Create the database. Quickest: paste the single file `supabase/setup_all.sql`
+   (all migrations plus the stock list) into the Supabase **SQL Editor** and run
+   it once on a new project; it suits setting up from a phone. Or either paste
    each file in `supabase/migrations/` in order (001, 002, …) and then
    `supabase/seed.sql` into the Supabase **SQL Editor**, or with the Supabase CLI:
 
@@ -253,6 +255,7 @@ supabase/
   migrations/002_manual_prices.sql    per-user manual prices
   migrations/003_stock_prices.sql     shared market closes (server-written)
   seed.sql                           common SET stocks
+  setup_all.sql                      migrations 001-003 + seed in one file (new projects only)
 ```
 
 Notes:
