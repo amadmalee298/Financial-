@@ -1,0 +1,33 @@
+@import "tailwindcss";
+
+/* Design tokens (Tailwind v4 is configured in CSS, not tailwind.config.ts). */
+@theme {
+  --color-primary: #0f172a;
+  --color-secondary: #1e293b;
+  --color-positive: #16a34a;
+  --color-negative: #dc2626;
+  --color-background: #f8fafc;
+
+  --font-sans: var(--font-sans-thai), ui-sans-serif, system-ui, sans-serif;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-primary);
+}
+
+/* iOS Safari zooms into any focused field below 16px; keep fields at 16px on
+   touch-sized screens (desktop keeps the smaller sizes). */
+@media (max-width: 1023px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
+/* App-like feel once installed. */
+html {
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
