@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { loadError } from "@/lib/utils/errors";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -23,7 +24,7 @@ export default async function AnalysisListPage({ searchParams }: { searchParams:
       .order("updated_at", { ascending: false }),
     getCurrentPrices(),
   ]);
-  if (error) throw new Error("โหลดบทวิเคราะห์ไม่สำเร็จ");
+  if (error) throw loadError("โหลดบทวิเคราะห์ไม่สำเร็จ", error);
 
   return (
     <div className="flex flex-col gap-4">

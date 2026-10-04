@@ -169,6 +169,27 @@ after another.
   opening the dashboard went from 780 ms to a first paint at 56 ms and full
   content at 448 ms (was 894 ms). These are simulated numbers, not your
   deployment.
+- **Reads are retried quickly, not slowly.** supabase-js retries failed reads by
+  itself, waiting 1 s, 2 s and then 4 s, so one network hiccup (very common on
+  serverless: a kept-alive connection closed while the function slept) could
+  stall a page for up to ~7 s and then end in an error. That built-in retry is
+  off (`db: { retry: false }` in `lib/supabase/server.ts`); instead
+  `lib/supabase/resilient-fetch.ts` gives each read a 4 s timeout and one retry
+  after 250 ms. Writes are never retried or cut short.
+- **Failures are visible.** A failed load logs its real cause to the server log
+  (`[load-error] …`, `[supabase] … giving up`) and shows a friendly page with a
+  retry button (`app/error.tsx`, `app/(app)/error.tsx`) instead of Next.js's
+  bare "This page couldn't load". To find the cause of an error, copy the
+  *รหัสข้อผิดพลาด* (digest) from that page and search for it in Vercel →
+  Logs, or look for the `[load-error]` line just before it. A failed login
+  check is never treated as "signed out": it is retried, then shown as an error.
+- **Speed check** (*Settings → ตรวจความเร็ว*): shows where the time goes, from
+  the phone itself. It times a plain static file (phone → Vercel), a function
+  with no database (cold start), trivial Supabase queries from the server
+  (distance to the database, with the region the function runs in), and a real
+  dashboard load, then says in plain language what to fix. Target: the
+  dashboard in under 3 seconds. Backed by `GET /api/speed` (signed-in users
+  only; nothing is stored).
 - Free Supabase projects pause after a week of inactivity and the first request
   after that is slow; free serverless functions also have a cold start of about
   a second after sitting idle.

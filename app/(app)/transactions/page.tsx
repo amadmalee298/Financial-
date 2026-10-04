@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { loadError } from "@/lib/utils/errors";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -29,7 +30,7 @@ export default async function TransactionsPage({ searchParams }: { searchParams:
     query.returns<TransactionWithStock[]>(),
     supabase.from("stocks").select("id, symbol, name, market, sector").order("symbol"),
   ]);
-  if (error) throw new Error("โหลดรายการซื้อขายไม่สำเร็จ");
+  if (error) throw loadError("โหลดรายการซื้อขายไม่สำเร็จ", error);
 
   let formValues: TransactionFormValues | null = null;
   if (params.edit) {

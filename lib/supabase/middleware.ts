@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
+import { isAuthRetryableFetchError } from "@supabase/supabase-js";
 
 // /api/cron has no user session; the route checks CRON_SECRET itself.
 // /offline is the service worker's fallback page and must load signed out.
@@ -49,12 +50,15 @@ export async function updateSession(request: NextRequest) {
   // refreshes an expired session. It verifies the JWT locally when the project
   // uses asymmetric signing keys (no network call), and falls back to asking
   // the Auth server for older shared-secret projects.
-  const { data } = await supabase.auth.getClaims();
+  const { data, error } = await supabase.auth.getClaims();
   const userId = data?.claims?.sub ?? null;
+  // A check that could not complete (network blip) is not "signed out": let the
+  // request through, and the page layer retries and shows an error if it persists.
+  const unverified = !userId && isAuthRetryableFetchError(error);
 
   const { pathname } = request.nextUrl;
 
-  if (!userId && !isPublicPath(pathname)) {
+  if (!userId && !unverified && !isPublicPath(pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.search = "";

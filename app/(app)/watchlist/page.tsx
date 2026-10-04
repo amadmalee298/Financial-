@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { loadError } from "@/lib/utils/errors";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -32,7 +33,7 @@ export default async function WatchlistPage({ searchParams }: { searchParams: Se
     getCurrentPrices(),
     getPortfolio(),
   ]);
-  if (error) throw new Error("โหลด Watchlist ไม่สำเร็จ");
+  if (error) throw loadError("โหลด Watchlist ไม่สำเร็จ", error);
 
   const analyzed = new Set((analyses ?? []).map((a) => a.stock_id));
   const items: (WatchItem & { stockId: string })[] = rows

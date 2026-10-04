@@ -79,6 +79,8 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
   if (url.pathname.startsWith("/api/") || url.pathname.startsWith("/auth/")) return;
+  // The Settings speed check must measure the real network, not a cached copy.
+  if (url.searchParams.has("speedtest")) return;
   // Next.js client-side navigation and prefetch: if these fail, Next falls
   // back to a full page load, which this worker then handles.
   if (request.headers.has("RSC") || request.headers.has("Next-Router-Prefetch") || url.searchParams.has("_rsc")) return;

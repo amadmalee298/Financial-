@@ -2,6 +2,7 @@ import "server-only";
 import { cookies } from "next/headers";
 import { createServerClient } from "@supabase/ssr";
 import type { Database } from "@/types/database";
+import { resilientFetch } from "./resilient-fetch";
 
 /** Supabase client for Server Components, Server Actions and Route Handlers. */
 export async function createClient() {
@@ -11,6 +12,11 @@ export async function createClient() {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
+      // Reads time out and retry once, quickly (see resilient-fetch.ts). supabase-js
+      // also retries reads by itself, waiting 1 s, 2 s, then 4 s; stacked on top, a
+      // single network hiccup could stall a page for several seconds, so that one is off.
+      db: { retry: false },
+      global: { fetch: resilientFetch },
       cookies: {
         getAll() {
           return cookieStore.getAll();

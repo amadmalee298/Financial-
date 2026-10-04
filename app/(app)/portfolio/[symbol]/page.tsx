@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { loadError } from "@/lib/utils/errors";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -32,7 +33,7 @@ export default async function HoldingPage({ params, searchParams }: Props) {
     .from("transactions")
     .select("id, transaction_type, trade_date, created_at, quantity, price, total_amount, note")
     .eq("stock_id", holding.stockId);
-  if (error) throw new Error("โหลดรายการไม่สำเร็จ");
+  if (error) throw loadError("โหลดรายการไม่สำเร็จ", error);
   const { entries } = replayPosition(transactions);
 
   const href = `/portfolio/${encodeURIComponent(symbol)}`;
