@@ -189,6 +189,9 @@ after another.
   A plain number is an error without a known cause: look for the matching
   `[load-error]` line in Vercel → Logs. A failed login check is never treated as
   "signed out": it is retried, then shown as an error.
+- **Keep-alive**: free Supabase projects pause after 7 days without use.
+  `vercel.json` runs `/api/cron/keepalive` daily (one tiny query). It needs
+  `SUPABASE_SERVICE_ROLE_KEY` and `CRON_SECRET` set in Vercel, then a redeploy.
 - Free Supabase projects pause after a week of inactivity and the first request
   after that is slow; free serverless functions also have a cold start of about
   a second after sitting idle.
