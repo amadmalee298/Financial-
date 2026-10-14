@@ -252,8 +252,10 @@ the watchlist and the performance chart.
   curl -H "Authorization: Bearer $CRON_SECRET" https://your-app/api/cron/prices
   ```
 
-  On Vercel, add a cron entry for `/api/cron/prices` in `vercel.json`; Vercel
-  sends the `Authorization` header automatically when `CRON_SECRET` is set.
+  On Vercel, `vercel.json` already schedules `/api/cron/prices` on weekdays at
+  17:30 Bangkok (`30 10 * * 1-5` UTC), after the SET close; Vercel sends the
+  `Authorization` header automatically when `CRON_SECRET` is set. On the Hobby
+  plan a cron runs once a day, at some point within the scheduled hour.
 - **Source**: Yahoo Finance (`SYMBOL.BK`), which is free but **unofficial**: it
   gives end-of-day closes (not real time), may be delayed, rate-limited or
   changed without notice, and was written against its documented response
